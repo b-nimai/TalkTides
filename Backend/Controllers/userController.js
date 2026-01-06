@@ -9,43 +9,82 @@ const bcrypt = require('bcrypt');
 const wellcomeMail = require("../Mail/WellcomeMail");
 
 // Send OTP Controller
+// const sendOtpController = expressAsyncHandler(async (req, res) => {
+//     try {
+//         const { firstName, email, password, confirmPassword } = req.body;
+//         // Checking for empty fields
+//         if(!firstName || !email || !password || !confirmPassword  ) {
+//             res.status(400);
+//             throw new Error("Please Enter all the Feilds.");
+//         }
+//         if(password !== confirmPassword) {
+//             res.status(400);
+//             throw new Error("Password not matched with confirmPassword");
+//         }
+//         // Checking for existing user
+//         const userExists = await User.findOne({email});
+//         // if User already exist throw an error
+//         if(userExists) {
+//             res.status(400);
+//             throw new Error("Email already registered with another Account.");
+//         }
+//         // Generate OTP
+//         const otp = crypto.randomInt(1000, 9999).toString();
+//         await OTP.create({
+//             email,
+//             otp
+//         })
+//         await mailSender(email, "OTP Verification for Signup", otpTemplate(otp));
+//         return res.status(201).json({
+//             success: true,
+//             message: "OTP Send successfull."
+//         })
+//     } catch (error) {
+//         return res.status(511).json({
+//             success: false,
+//             message: error.message
+//         })
+//     }
+// })
+
 const sendOtpController = expressAsyncHandler(async (req, res) => {
-    try {
-        const { firstName, email, password, confirmPassword } = req.body;
-        // Checking for empty fields
-        if(!firstName || !email || !password || !confirmPassword  ) {
-            res.status(400);
-            throw new Error("Please Enter all the Feilds.");
-        }
-        if(password !== confirmPassword) {
-            res.status(400);
-            throw new Error("Password not matched with confirmPassword");
-        }
-        // Checking for existing user
-        const userExists = await User.findOne({email});
-        // if User already exist throw an error
-        if(userExists) {
-            res.status(400);
-            throw new Error("Email already registered with another Account.");
-        }
-        // Generate OTP
-        const otp = crypto.randomInt(1000, 9999).toString();
-        await OTP.create({
-            email,
-            otp
-        })
-        await mailSender(email, "OTP Verification for Signup", otpTemplate(otp));
-        return res.status(201).json({
-            success: true,
-            message: "OTP Send successfull."
-        })
-    } catch (error) {
-        return res.status(511).json({
-            success: false,
-            message: error.message
-        })
+    const { firstName, email, password, confirmPassword } = req.body;
+
+    if (!firstName || !email || !password || !confirmPassword) {
+        const err = new Error("Please enter all fields");
+        err.statusCode = 400;
+        throw err;
     }
-})
+
+    if (password !== confirmPassword) {
+        const err = new Error("Passwords do not match");
+        err.statusCode = 400;
+        throw err;
+    }
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+        const err = new Error("Email already registered");
+        err.statusCode = 400;
+        throw err;
+    }
+
+    const otp = crypto.randomInt(1000, 9999).toString();
+    await OTP.create({ email, otp });
+
+    // Send response FIRST
+    res.status(201).json({
+        success: true,
+        message: "OTP sent successfully"
+    });
+
+    // Send mail ASYNC (non-blocking)
+    mailSender(email, "OTP Verification", otpTemplate(otp))
+        .catch(err => {
+            console.error("OTP mail failed:", err.message);
+        });
+});
+
 
 const sendOtpController2 = expressAsyncHandler(async (req, res) => {
     try {
