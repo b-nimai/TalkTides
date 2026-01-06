@@ -1,32 +1,32 @@
-// const nodemailer = require('nodemailer');
+const nodemailer = require('nodemailer');
 
-// const mailSender = async (email, sub, body)=> {
+const mailSender = async (email, sub, body) => {
 
-//   const transporter = nodemailer.createTransport({
-//     host: process.env.MAIL_HOST,
-//     port: 587,
-//     secure: false,
-//     auth: {
-//       user: process.env.MAIL_USER,
-//       pass: process.env.MAIL_PASS
-//     }
-//     })
+    const transporter = nodemailer.createTransport({
+        host: process.env.MAIL_HOST,
+        port: 587,
+        secure: false,
+        auth: {
+            user: process.env.MAIL_USER,
+            pass: process.env.MAIL_PASS
+        }
+    })
 
-//     const mailOptions = {
-//       from: 'inquiriestides@gmail.com',
-//       to: `${email}`,
-//       subject: `${sub}`,
-//       html: `${body}`,
-//     };
+    const mailOptions = {
+        from: 'inquiriestides@gmail.com',
+        to: `${email}`,
+        subject: `${sub}`,
+        html: `${body}`,
+    };
 
-//     try {
-//       await transporter.sendMail(mailOptions) 
-//       return "OTP Send."
-//     } catch (error) {
-//       return error.message
-//     }
-// }
-// module.exports = { mailSender }
+    try {
+        await transporter.sendMail(mailOptions)
+        return "OTP Send."
+    } catch (error) {
+        return error.message
+    }
+}
+module.exports = { mailSender }
 
 
 // const nodemailer = require("nodemailer");
@@ -71,22 +71,22 @@
 
 
 
-const { Resend } = require("resend");
+// const { Resend } = require("resend");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// const resend = new Resend(process.env.RESEND_API_KEY);
 
-const mailSender = async (to, subject, html) => {
-    try {
-        await resend.emails.send({
-            from: "TalkTides <onboarding@resend.dev>",
-            to,
-            subject,
-            html,
-        });
-    } catch (error) {
-        console.error("Mail failed:", error.message);
-        throw error;
-    }
-};
+// const mailSender = async (to, subject, html) => {
+//     try {
+//         await resend.emails.send({
+//             from: "TalkTides <onboarding@resend.dev>",
+//             to,
+//             subject,
+//             html,
+//         });
+//     } catch (error) {
+//         console.error("Mail failed:", error.message);
+//         throw error;
+//     }
+// };
 
-module.exports = { mailSender };
+// module.exports = { mailSender };
