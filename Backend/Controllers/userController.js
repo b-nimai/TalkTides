@@ -139,43 +139,74 @@ const sendOtpController2 = expressAsyncHandler(async (req, res) => {
         .catch(err => console.error("OTP email failed:", err.message));
 });
 
-// Singup Controller
-const signupController = expressAsyncHandler(async (req, res) => {
-    try {
-        const { firstName, lastName, email, password, otp } = req.body;
-        // Confirm OTP
-        const otpRecord = await OTP.findOne({ email, otp });
-        if (!otpRecord) {
+// // Singup Controller
+// const signupController = expressAsyncHandler(async (req, res) => {
+//     try {
+//         const { firstName, lastName, email, password, otp } = req.body;
+//         // Confirm OTP
+//         const otpRecord = await OTP.findOne({ email, otp });
+//         if (!otpRecord) {
 
-            return res.status(400).json({
-                success: false, 
-                message: 'Invalid OTP' 
-            });
-        }
-        // Create new user
-        const name = firstName.trim() + " " + lastName.trim();
-        const newUser = await User.create({
-            name,
-            email,
-            password,
-            profilePic: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName} ${lastName}`
-        });
-        // Delete OTP record after successful verification
-        await OTP.deleteOne({ email, otp });
-        // return response
-       await mailSender(email, "Wellcome To TalkTides", wellcomeMail(firstName));
-        return res.status(201).json({
-            id: newUser._id,
-            name: newUser.name,
-            email: newUser.email
-        })
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message
-        })
+//             return res.status(400).json({
+//                 success: false, 
+//                 message: 'Invalid OTP' 
+//             });
+//         }
+//         // Create new user
+//         const name = firstName.trim() + " " + lastName.trim();
+//         const newUser = await User.create({
+//             name,
+//             email,
+//             password,
+//             profilePic: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName} ${lastName}`
+//         });
+//         // Delete OTP record after successful verification
+//         await OTP.deleteOne({ email, otp });
+//         // return response
+//        await mailSender(email, "Wellcome To TalkTides", wellcomeMail(firstName));
+//         return res.status(201).json({
+//             id: newUser._id,
+//             name: newUser.name,
+//             email: newUser.email
+//         })
+//     } catch (error) {
+//         return res.status(500).json({
+//             success: false,
+//             message: error.message
+//         })
+//     }
+// });
+
+const signupController = expressAsyncHandler(async (req, res) => {
+    const { firstName, lastName, email, password, otp } = req.body;
+
+    const otpRecord = await OTP.findOne({ email, otp });
+    if (!otpRecord) {
+        const err = new Error("Invalid OTP");
+        err.statusCode = 400;
+        throw err;
     }
+
+    const user = await User.create({
+        name: `${firstName.trim()} ${lastName.trim()}`,
+        email,
+        password,
+        profilePic: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName} ${lastName}`,
+    });
+
+    await OTP.deleteOne({ email, otp });
+
+    res.status(201).json({
+        id: user._id,
+        name: user.name,
+        email: user.email,
+    });
+
+    // Welcome mail (non-blocking)
+    mailSender(email, "Welcome to TalkTides", wellcomeMail(firstName))
+        .catch(err => console.error("Welcome mail failed:", err.message));
 });
+
 
 // Login controller
 const loginController = expressAsyncHandler( async(req, res) => {
