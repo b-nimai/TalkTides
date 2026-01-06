@@ -86,35 +86,58 @@ const sendOtpController = expressAsyncHandler(async (req, res) => {
 });
 
 
-const sendOtpController2 = expressAsyncHandler(async (req, res) => {
-    try {
-        const { email } = req.body;
+// const sendOtpController2 = expressAsyncHandler(async (req, res) => {
+//     try {
+//         const { email } = req.body;
 
-        // Checking for existing user
-        const userExists = await User.findOne({email});
-        // if User already exist throw an error
-        if(!userExists) {
-            res.status(404);
-            throw new Error("User Not Found.");
-        }
-        // Generate OTP
-        const otp = crypto.randomInt(1000, 9999).toString();
-        await OTP.create({
-            email,
-            otp
-        })
-        await mailSender(email, "OTP Verification", otpTemplate(otp));
-        return res.status(201).json({
-            success: true,
-            message: "OTP Send successfull."
-        })
-    } catch (error) {
-        return res.status(511).json({
-            success: false,
-            message: error.message
-        })
+//         // Checking for existing user
+//         const userExists = await User.findOne({email});
+//         // if User already exist throw an error
+//         if(!userExists) {
+//             res.status(404);
+//             throw new Error("User Not Found.");
+//         }
+//         // Generate OTP
+//         const otp = crypto.randomInt(1000, 9999).toString();
+//         await OTP.create({
+//             email,
+//             otp
+//         })
+//         await mailSender(email, "OTP Verification", otpTemplate(otp));
+//         return res.status(201).json({
+//             success: true,
+//             message: "OTP Send successfull."
+//         })
+//     } catch (error) {
+//         return res.status(511).json({
+//             success: false,
+//             message: error.message
+//         })
+//     }
+// })
+
+// Send OTP (Forgot Password)
+const sendOtpController2 = expressAsyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+        const err = new Error("User not found");
+        err.statusCode = 404;
+        throw err;
     }
-})
+
+    const otp = crypto.randomInt(1000, 9999).toString();
+    await OTP.create({ email, otp });
+
+    res.status(201).json({
+        success: true,
+        message: "OTP sent successfully",
+    });
+
+    mailSender(email, "OTP Verification", otpTemplate(otp))
+        .catch(err => console.error("OTP email failed:", err.message));
+});
 
 // Singup Controller
 const signupController = expressAsyncHandler(async (req, res) => {
